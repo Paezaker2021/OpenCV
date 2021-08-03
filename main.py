@@ -214,6 +214,9 @@ plt.xticks([]), plt.yticks([])
 plt.show()
 '''
 
+
+'''
+#영상이나 웹캠 얼굴 인식(변경 시 cap의 변수를 변경하면 됨)
 cap = cv2.VideoCapture('data/samplevideo.mp4')
 faceCascade = cv2.CascadeClassifier("data/haarcascade_frontalface_default.xml")
 
@@ -241,4 +244,48 @@ while(cap.isOpened()):
 cap.release()
 cv2.destroyAllWindows()
 
+'''
+
+
+import sys
+filename = 'data/1627960189015.jpg'
+
+img = cv2.imread(filename)
+
+if img is None:
+    print('Image load failed!')
+    exit()
+
+# Load network
+
+net = cv2.dnn.readNet('data/bvlc_googlenet.caffemodel', 'data/deploy.prototxt')
+
+if net.empty():
+    print('Network load failed!')
+    exit()
+
+# Load class names
+
+classNames = None
+with open('data/classification_classes_ILSVRC2012.txt', 'rt') as f:
+    classNames = f.read().rstrip('\n').split('\n')
+
+# Inference
+
+inputBlob = cv2.dnn.blobFromImage(img, 1, (224, 224), (104, 117, 123))
+net.setInput(inputBlob)
+prob = net.forward()
+
+# Check results & Display
+
+out = prob.flatten()
+classId = np.argmax(out)
+confidence = out[classId]
+
+text = '%s (%4.2f%%)' % (classNames[classId], confidence * 100)
+cv2.putText(img, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
+
+cv2.imshow('img', img)
+cv2.waitKey()
+cv2.destroyAllWindows()
 
